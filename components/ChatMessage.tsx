@@ -9,6 +9,7 @@ import {
   EllipsisVertical,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { time } from "console";
 
 type ChatMessage = {
   dateTime: string;
@@ -25,7 +26,7 @@ export default function ChatMessage() {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   var lineCount = userInput.split(/\r?\n/).length;
   const [id, setId] = useState<string | null>("");
-
+  var currentDate: any = new Date();
   useEffect(() => {
     let storedId = localStorage.getItem("sessionId");
     console.log("from local storage", storedId);
@@ -64,7 +65,7 @@ export default function ChatMessage() {
       const saveMessages = async () => {
         const payload = {
           message: currentInput,
-          dateTime: new Date().toString(),
+          dateTime: new Date().toISOString(),
           sessionId: id,
           EnteredBy: "user",
         };
@@ -94,7 +95,6 @@ export default function ChatMessage() {
 
   function convertToShortTime(fullTime: string) {
     const date = new Date(fullTime);
-
     let hours = date.getHours();
     let minutes = date.getMinutes().toString();
 
@@ -114,7 +114,7 @@ export default function ChatMessage() {
   function extractDate(messagedate: any) {
     let date: any = new Date(messagedate);
     date = date.toDateString();
-    let currentDate: any = new Date();
+    var currentDate: any = new Date();
     currentDate = currentDate.toDateString();
     if (date == currentDate) {
       return "Today";
@@ -135,7 +135,7 @@ export default function ChatMessage() {
   });
 
   return (
-    <main>
+    <main className="text-gray-900">
       <div
         className={`  flex flex-col overflow-y-scroll h-screen justify-between 
         cursor-auto fixed top-0 right-0 size-full  bg-gray-50  bg-[url('/bg-image.jpeg')] `}
@@ -143,7 +143,7 @@ export default function ChatMessage() {
         <header className="z-index  w-full h-12 bg-stone-50 shadow fixed top-0 flex  flex-wrap items-center justify-between ">
           <div className="mx-4 flex gap-2 items-center ">
             <div className="size-10 rounded-full bg-gray-200 border-gray-50 border "></div>
-            <span className="font-bold  text-gray-900">SoftMania</span>
+            <span className="font-bold text-gray-900">SoftMania</span>
           </div>
           <EllipsisVertical className="mx-4" />
         </header>
@@ -154,7 +154,7 @@ export default function ChatMessage() {
           {Object.keys(messagesByDate).map((date) => (
             <div key={date} className="w-full ">
               <div className="w-full  flex justify-center my-2">
-                <span className="bg-yellow-50 border text-[.8rem] font-bold text-gray-800 rounded-sm p-px">
+                <span className="bg-yellow-50 border text-[.8rem] font-bold text-gray-800 rounded-sm p-1 shadow ">
                   {date}
                 </span>
               </div>
@@ -167,7 +167,7 @@ export default function ChatMessage() {
                   }`}
                 >
                   <p
-                    className={`rounded-lg max-w-[70%] border p-1 text-gray-900
+                    className={`rounded-lg max-w-[70%] border p-1 
           ${m.sender === "user" ? "bg-gray-50 text-left" : "bg-slate-100 text-left"}  
         `}
                   >
@@ -185,9 +185,12 @@ export default function ChatMessage() {
             <p
               key={m.id}
               id={m.id}
-              className=" bg-blue-100  rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word text-gray-900 "
+              className=" bg-blue-100  rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word "
             >
               {m.text}
+              <p className="text-[.7rem]  text-gray-600 text-right">
+                {convertToShortTime(currentDate) + " "}
+              </p>
             </p>
           ))}
         </div>
@@ -227,9 +230,9 @@ export default function ChatMessage() {
                   user();
                 }
               }}
-              className={`bg-white  min-w-[80%] min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-900
-            resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content 
-            ${lineCount > 1 ? "w-full outline-none " : "outline-none"}
+              className={`bg-white  min-w-[80%] min-h-[1/2lh]  max-h-[8lh] rounded-lg 
+            resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content caret-amber-950
+            ${lineCount > 1 ? "w-full outline-none  " : "outline-none"}
             `}
             ></textarea>
             {/* SEND BUTTON */}
@@ -238,7 +241,7 @@ export default function ChatMessage() {
                 userInput.trim() !== ""
                   ? "bg-green-900 text-white  shadow-[0_0_15px_3px_rgba(34,197,94,0.9)] ring-2 ring-green-500 "
                   : ""
-              } `}
+              }  ${lineCount > 1 ? "justify-end  items-end" : ""} `}
             >
               <Send
                 className={`size-8 p-1 mt-1 cursor-not-allowed  ${userInput.trim() !== "" ? "animate-pulse cursor-pointer" : ""}`}
