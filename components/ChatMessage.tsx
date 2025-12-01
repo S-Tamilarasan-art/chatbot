@@ -143,7 +143,7 @@ export default function ChatMessage() {
         <header className="z-index  w-full h-12 bg-stone-50 shadow fixed top-0 flex  flex-wrap items-center justify-between ">
           <div className="mx-4 flex gap-2 items-center ">
             <div className="size-10 rounded-full bg-gray-200 border-gray-50 border "></div>
-            <span className="font-bold ">SoftMania</span>
+            <span className="font-bold  text-gray-900">SoftMania</span>
           </div>
           <EllipsisVertical className="mx-4" />
         </header>
@@ -167,7 +167,7 @@ export default function ChatMessage() {
                   }`}
                 >
                   <p
-                    className={`rounded-lg max-w-[70%] border p-1 
+                    className={`rounded-lg max-w-[70%] border p-1 text-gray-900
           ${m.sender === "user" ? "bg-gray-50 text-left" : "bg-slate-100 text-left"}  
         `}
                   >
@@ -185,7 +185,7 @@ export default function ChatMessage() {
             <p
               key={m.id}
               id={m.id}
-              className=" bg-blue-100  rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word "
+              className=" bg-blue-100  rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word text-gray-900 "
             >
               {m.text}
             </p>
@@ -227,7 +227,7 @@ export default function ChatMessage() {
                   user();
                 }
               }}
-              className={`bg-white  min-w-[80%] min-h-[1/2lh]  max-h-[8lh] rounded-lg 
+              className={`bg-white  min-w-[80%] min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-900
             resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content 
             ${lineCount > 1 ? "w-full outline-none " : "outline-none"}
             `}
