@@ -8,7 +8,8 @@ import {
   Paperclip,
   EllipsisVertical,
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { time } from "console";
 
 type ChatMessage = {
@@ -27,14 +28,22 @@ export default function ChatMessage() {
   var lineCount = userInput.split(/\r?\n/).length;
   const [id, setId] = useState<string | null>("");
   var currentDate: any = new Date();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = new URLSearchParams(searchParams);
+
   useEffect(() => {
-    let storedId = localStorage.getItem("sessionId");
+    var storedId: any =
+      searchParams.get("sessionId") || localStorage.getItem("sessionId");
     console.log("from local storage", storedId);
     if (!storedId) {
       storedId = uuidv4();
       localStorage.setItem("sessionId", storedId);
     }
 
+    params.set("sessionId", storedId);
+    router.replace(`?${params.toString()}`);
     setId(storedId);
 
     const getHistory = async () => {
@@ -134,8 +143,19 @@ export default function ChatMessage() {
     messagesByDate[date].push(msg);
   });
 
+  function detectLines() {
+    const el = textAreaRef.current;
+    if (!el) return;
+
+    const style = window.getComputedStyle(el);
+    const lineHeight = parseFloat(style.lineHeight);
+
+    const lines = Math.floor(el.scrollHeight / lineHeight);
+    lineCount = lineCount + lines - 1;
+    console.log(lineCount);
+  }
   return (
-    <main className="text-gray-900">
+    <main className=" text-gray-950">
       <div
         className={`  flex flex-col overflow-y-scroll h-screen justify-between 
         cursor-auto fixed top-0 right-0 size-full  bg-gray-50  bg-[url('/bg-image.jpeg')] `}
@@ -143,9 +163,9 @@ export default function ChatMessage() {
         <header className="z-index  w-full h-12 bg-stone-50 shadow fixed top-0 flex  flex-wrap items-center justify-between ">
           <div className="mx-4 flex gap-2 items-center ">
             <div className="size-10 rounded-full bg-gray-200 border-gray-50 border "></div>
-            <span className="font-bold text-gray-900">SoftMania</span>
+            <span className="font-bold text-gray-950">Muruganantham</span>
           </div>
-          <EllipsisVertical className="mx-4" />
+          <div>{/* <EllipsisVertical className="mx-4 " /> */}</div>
         </header>
         {/* USER ENTERING TEXT */}
         <div className=" w-[95%] mx-auto  mt-14 mb-30 flex flex-col flex-wrap gap-3 items-end lg:w-[70%]">
@@ -166,7 +186,7 @@ export default function ChatMessage() {
                     m.sender === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <p
+                  <div
                     className={`rounded-lg max-w-[70%] border p-1 
           ${m.sender === "user" ? "bg-gray-50 text-left" : "bg-slate-100 text-left"}  
         `}
@@ -176,7 +196,7 @@ export default function ChatMessage() {
                     <p className="text-[.7rem]  text-gray-600 text-right">
                       {convertToShortTime(m.dateTime) + " "}
                     </p>
-                  </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -185,7 +205,7 @@ export default function ChatMessage() {
             <p
               key={m.id}
               id={m.id}
-              className=" bg-blue-100  rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word "
+              className=" bg-gray-50  text-gray-950 rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word "
             >
               {m.text}
               <p className="text-[.7rem]  text-gray-600 text-right">
@@ -197,14 +217,14 @@ export default function ChatMessage() {
         <div ref={bottomRef}></div>
         {/* INPUT FIELD */}
         <footer
-          className={`bg-[url('/bg-image.jpeg')] z-20 w-[99%] max-h-[10lh] h-18 fixed bottom-0 `}
+          className={`bg-[url('/bg-image.jpeg')] z-20 w-[99%] max-h-[10lh ] h-18 fixed bottom-0 `}
         >
           <div
-            className={`z-60 flex flex-row  flex-wrap  overflow-y-visible items-center
-       justify-between fixed  bottom-5 left-1/2 -translate-x-1/2     ring-1 ring-gray-400 
-       rounded-lg w-[95%] max-h-[10lh] min-h-[lh]  bg-white p-2 lg:max-w-[70%]   ${
-         lineCount > 1 ? "flex-col justify-between items-end " : " "
-       } `}
+            className={`z-60 flex  flex-wrap  overflow-y-visible 
+              fixed  bottom-5 left-1/2 -translate-x-1/2     ring-1 ring-gray-400 
+              rounded-lg w-[95%] max-h-[10lh] min-h-[lh]  bg-white p-2 lg:max-w-[70%]  
+              ${lineCount > 1 ? "flex-col justify-between items-end " : "flex-row items-center justify-between"}
+               `}
           >
             {/* INPUT FIELD */}
             <textarea
@@ -217,7 +237,7 @@ export default function ChatMessage() {
               onChange={(e) => {
                 setUserInput(e.target.value);
                 setCurrentInput(e.target.value);
-                console.log(lineCount);
+                detectLines();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.shiftKey) {
@@ -230,23 +250,28 @@ export default function ChatMessage() {
                   user();
                 }
               }}
-              className={`bg-white  min-w-[80%] min-h-[1/2lh]  max-h-[8lh] rounded-lg 
+              className={`bg-white  min-w-[89%] min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-950
             resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content caret-amber-950
-            ${lineCount > 1 ? "w-full outline-none  " : "outline-none"}
+            
             `}
             ></textarea>
             {/* SEND BUTTON */}
             <div
-              className={`rounded-full size-9 border   ${
-                userInput.trim() !== ""
-                  ? "bg-green-900 text-white  shadow-[0_0_15px_3px_rgba(34,197,94,0.9)] ring-2 ring-green-500 "
-                  : ""
-              }  ${lineCount > 1 ? "justify-end  items-end" : ""} `}
+              className={`${lineCount == 1 ? "" : "w-full flex  justify-end items-end "}`}
             >
-              <Send
-                className={`size-8 p-1 mt-1 cursor-not-allowed  ${userInput.trim() !== "" ? "animate-pulse cursor-pointer" : ""}`}
-                onClick={user}
-              />
+              <div
+                className={`rounded-full size-9 border  
+                ${
+                  userInput.trim() !== ""
+                    ? "bg-green-900 text-white  shadow-[0_0_15px_3px_rgba(34,197,94,0.9)] ring-2 ring-green-500 "
+                    : ""
+                }  `}
+              >
+                <Send
+                  className={`size-8 p-1 mt-1 cursor-not-allowed  ${userInput.trim() !== "" ? "animate-pulse cursor-pointer" : ""}`}
+                  onClick={user}
+                />
+              </div>
             </div>
           </div>
         </footer>
