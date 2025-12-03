@@ -11,6 +11,7 @@ import {
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { time } from "console";
+import Image from "next/image";
 
 type ChatMessage = {
   dateTime: string;
@@ -155,25 +156,18 @@ export default function ChatMessage() {
     console.log(lineCount);
   }
   return (
-    <main className=" text-gray-950">
+    <div className=" box-border h-full text-gray-950 ">
       <div
         className={`  flex flex-col overflow-y-scroll h-screen justify-between 
-        cursor-auto fixed top-0 right-0 size-full  bg-gray-50  bg-[url('/bg-image.jpeg')] `}
+        cursor-auto w-full  bg-gray-50  bg-[url('/bg-image.jpeg')] `}
       >
-        <header className="z-index  w-full h-12 bg-stone-50 shadow fixed top-0 flex  flex-wrap items-center justify-between ">
-          <div className="mx-4 flex gap-2 items-center ">
-            <div className="size-10 rounded-full bg-gray-200 border-gray-50 border "></div>
-            <span className="font-bold text-gray-950">Muruganantham</span>
-          </div>
-          <div>{/* <EllipsisVertical className="mx-4 " /> */}</div>
-        </header>
         {/* USER ENTERING TEXT */}
-        <div className=" w-[95%] mx-auto  mt-14 mb-30 flex flex-col flex-wrap gap-3 items-end lg:w-[70%]">
+        <div className=" w-full px-5  mt-14 mb-30 flex flex-col flex-wrap gap-3 items-end  ">
           {/* DATE STAMP */}
 
           {Object.keys(messagesByDate).map((date) => (
             <div key={date} className="w-full ">
-              <div className="w-full  flex justify-center my-2">
+              <div className="w-full  flex justify-center ">
                 <span className="bg-yellow-50 border text-[.8rem] font-bold text-gray-800 rounded-sm p-1 shadow ">
                   {date}
                 </span>
@@ -217,12 +211,13 @@ export default function ChatMessage() {
         <div ref={bottomRef}></div>
         {/* INPUT FIELD */}
         <footer
-          className={`bg-[url('/bg-image.jpeg')] z-20 w-[99%] max-h-[10lh ] h-18 fixed bottom-0 `}
+          className={`   fixed  bottom-0  bg-[url('/bg-image.jpeg')] z-100 w-[99%] max-h-[10lh ] max-h-[10lh ] h-18   lg:px-40 lg:w-full min-w-0`}
         >
           <div
-            className={`z-60 flex  flex-wrap  overflow-y-visible 
-              fixed  bottom-5 left-1/2 -translate-x-1/2     ring-1 ring-gray-400 
-              rounded-lg w-[95%] max-h-[10lh] min-h-[lh]  bg-white p-2 lg:max-w-[70%]  
+            className={`z-60 flex overflow-y-visible ring-1 ring-gray-400 
+                mx-auto w-[95%]  rounded-lg w- max-h-[10lh] min-h-[lh] 
+                 bg-white p-2 lg:mx-0 lg:max-w-1/2 max-md:min-w-95%
+              focus-within:inset-0 focus-within:ring-2
               ${lineCount > 1 ? "flex-col justify-between items-end " : "flex-row items-center justify-between"}
                `}
           >
@@ -250,25 +245,25 @@ export default function ChatMessage() {
                   user();
                 }
               }}
-              className={`bg-white  min-w-[89%] min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-950
+              className={`bg-white  min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-950 lg:min-w-5/6
             resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content caret-amber-950
-            
+             w-[calc(100%-3rem)]
             `}
             ></textarea>
             {/* SEND BUTTON */}
             <div
-              className={`${lineCount == 1 ? "" : "w-full flex  justify-end items-end "}`}
+              className={`${lineCount == 1 ? "" : " flex  justify-end items-end "}`}
             >
               <div
                 className={`rounded-full size-9 border  
                 ${
                   userInput.trim() !== ""
-                    ? "bg-green-900 text-white  shadow-[0_0_15px_3px_rgba(34,197,94,0.9)] ring-2 ring-green-500 "
+                    ? "bg-green-900 text-white  shadow-[0_0_15px_3px_rgba(34,197,94,0.9)] ring-2 ring-green-500 hover:scale-105  focus:outline-1 outline-green-500"
                     : ""
                 }  `}
               >
                 <Send
-                  className={`size-8 p-1 mt-1 cursor-not-allowed  ${userInput.trim() !== "" ? "animate-pulse cursor-pointer" : ""}`}
+                  className={`size-8 p-1 mt-1 cursor-not-allowed  ${userInput.trim() !== "" ? "animate-pulse cursor-pointer hover:animate-none" : ""}`}
                   onClick={user}
                 />
               </div>
@@ -276,6 +271,6 @@ export default function ChatMessage() {
           </div>
         </footer>
       </div>
-    </main>
+    </div>
   );
 }
