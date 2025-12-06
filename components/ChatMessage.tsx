@@ -8,22 +8,37 @@ import {
   Paperclip,
   EllipsisVertical,
 } from "lucide-react";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { time } from "console";
 import Image from "next/image";
+import { ChatSession, MessagesByDate } from "@/types/chatHistory";
 
-type ChatMessage = {
-  dateTime: string;
-  sender: "user" | "bot";
-  text: string;
+const formatTime = () => {
+  return new Date().toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
+
+// Format: "2025-12-06"
+// const formatDate = () => {
+//   return new Date().toISOString().split("T")[0];
+// };
+const formatDateForStorage = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 export default function ChatMessage() {
   const [userInput, setUserInput] = useState("");
   const [count, setCount] = useState(0);
   const [currentInput, setCurrentInput] = useState("");
   const [messages, setMessages] = useState<{ id: string; text: string }[]>([]);
-  const [chatmeassages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatmeassages, setChatMessages] = useState<MessagesByDate>({});
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   var lineCount = userInput.split(/\r?\n/).length;
@@ -53,7 +68,7 @@ export default function ChatMessage() {
         headers: { "Content-Type": "application/json" },
       });
       const getData = await response.json();
-      setChatMessages(getData.data.messages || []);
+      setChatMessages(getData.data.messages || {});
       console.log("AWS Response:", getData);
     };
     getHistory();
@@ -61,157 +76,111 @@ export default function ChatMessage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    extractDate(chatmeassages);
   }, [chatmeassages, messages]);
 
-  async function user() {
-    if (userInput.trim() !== "") {
-      const newMessage = {
-        id: (count + 1).toString(),
-        text: currentInput,
-      };
-      lineCount = 0;
+  const user = useCallback(async () => {
+    if (userInput.trim() === "") return;
+    const dateKey = formatDateForStorage(); // DD-MM-YYYY
+    const time = formatTime(); // HH:MM AM/PM
+    const newMessage = {
+      sender: "user",
+      text: userInput,
+      time: time,
+    };
+    setChatMessages((prev) => ({
+      ...prev,
+      [dateKey]: [...(prev[dateKey] || []), newMessage],
+    }));
 
-      const saveMessages = async () => {
-        const payload = {
-          message: currentInput,
-          dateTime: new Date().toISOString(),
-          sessionId: id,
-          EnteredBy: "user",
-        };
-        console.log(payload);
-        try {
-          const res = await fetch(`api/storedata`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          console.log("Status:", res.status);
-
-          if (res.status == 200) {
-            setUserInput("");
-          }
-        } catch (error) {
-          console.error("Fetch failed:", error);
-        } finally {
-        }
-      };
-      await saveMessages();
-      setMessages([...messages, newMessage]);
-      setCount(count + 1);
+    const payload = {
+      sessionId: id,
+      sender: "user",
+      message: userInput,
+      dateTime: new Date().toISOString(),
+      date: dateKey,
+      time: time,
+    };
+    try {
+      const res = await fetch(`/api/storedata`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.status == 200) {
+        setUserInput("");
+      }
+      console.log("Status:", res.status);
+    } catch (error) {
+      console.error("Fetch failed:", error);
     }
-  }
-
-  function convertToShortTime(fullTime: string) {
-    const date = new Date(fullTime);
-    let hours = date.getHours();
-    let minutes = date.getMinutes().toString();
-
-    // AM/PM
-    const ampm = hours >= 12 ? "PM" : "AM";
-
-    // Convert hours to 12-hour format
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-
-    // Pad minutes
-    minutes = minutes.toString().padStart(2, "0");
-
-    return `${hours}:${minutes} ${ampm}`;
-  }
-
-  function extractDate(messagedate: any) {
-    let date: any = new Date(messagedate);
-    date = date.toDateString();
-    var currentDate: any = new Date();
-    currentDate = currentDate.toDateString();
-    if (date == currentDate) {
-      return "Today";
-    }
-
-    return date;
-  }
-
-  const messagesByDate: any = {};
-
-  chatmeassages.forEach((msg) => {
-    const date = extractDate(msg.dateTime);
-
-    if (!messagesByDate[date]) {
-      messagesByDate[date] = [];
-    }
-    messagesByDate[date].push(msg);
-  });
+  }, [userInput, id, setChatMessages, setUserInput]);
 
   function detectLines() {
     const el = textAreaRef.current;
     if (!el) return;
-
     const style = window.getComputedStyle(el);
     const lineHeight = parseFloat(style.lineHeight);
-
     const lines = Math.floor(el.scrollHeight / lineHeight);
     lineCount = lineCount + lines - 1;
     console.log(lineCount);
   }
   return (
-    <div className=" box-border h-full text-gray-950 ">
+    <div className=" box-border h-full text-gray-950 divide-amber-300 shadow">
       <div
         className={`  flex flex-col overflow-y-scroll h-screen justify-between 
-        cursor-auto w-full  bg-gray-50  bg-[url('/bg-image.jpeg')] `}
+        cursor-auto w-full  bg-gray-50   `}
       >
         {/* USER ENTERING TEXT */}
-        <div className=" w-full px-5  mt-14 mb-30 flex flex-col flex-wrap gap-3 items-end  ">
+        <div className=" w-full px-5  mt-14 mb-30 flex flex-col flex-wrap gap-3 items-end  whitespace-normal">
           {/* DATE STAMP */}
 
-          {Object.keys(messagesByDate).map((date) => (
-            <div key={date} className="w-full ">
-              <div className="w-full  flex justify-center ">
-                <span className="bg-yellow-50 border text-[.8rem] font-bold text-gray-800 rounded-sm p-1 shadow ">
-                  {date}
+          {Object.keys(chatmeassages).map((dateKey) => (
+            <div key={dateKey} className="w-full ">
+              <div className="w-full  flex flex-wrap justify-center ">
+                <span className="bg-yellow-50 border text-[.8rem]  text-gray-800 rounded-lg p-1 shadow- ">
+                  {dateKey}
                 </span>
               </div>
 
-              {messagesByDate[date].map((m: any, index: number) => (
+              {chatmeassages[dateKey].map((m: any, index: any) => (
                 <div
                   key={index}
-                  className={`flex my-2 w-full  ${
+                  className={`flex flex-wrap my-2 w-full  ${
                     m.sender === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
-                    className={`rounded-lg max-w-[70%] border p-1 
+                    className={`rounded-lg max-w-[70%] border p-1  wrap-break-word shadow
           ${m.sender === "user" ? "bg-gray-50 text-left" : "bg-slate-100 text-left"}  
         `}
                   >
                     {m.text}
 
-                    <p className="text-[.7rem]  text-gray-600 text-right">
-                      {convertToShortTime(m.dateTime) + " "}
+                    <p className="text-[.7rem]  text-gray-600 text-right ">
+                      {m.time + " "}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
           ))}
-          {messages.map((m) => (
+          {/* {messages.map((m) => (
             <p
               key={m.id}
               id={m.id}
-              className=" bg-gray-50  text-gray-950 rounded-lg max-w-[85%] w-min-auto B border p-1 h-fit  wrap-break-word "
+              className=" bg-gray-50  text-gray-950 rounded-lg max-w-[70%] w-min-auto B border p-1 h-fit  break-all  "
             >
               {m.text}
-              <p className="text-[.7rem]  text-gray-600 text-right">
+            <p className="text-[.7rem] flex flex-wrap  text-gray-600 text-right">
                 {convertToShortTime(currentDate) + " "}
-              </p>
             </p>
-          ))}
+            </p>
+          ))} */}
         </div>
         <div ref={bottomRef}></div>
         {/* INPUT FIELD */}
         <footer
-          className={`   fixed  bottom-0  bg-[url('/bg-image.jpeg')] z-100 w-[99%] max-h-[10lh ] max-h-[10lh ] h-18   lg:px-40 lg:w-full min-w-0`}
+          className={` shadow  fixed  bottom-0  bg-white z-100 w-[99%]  max-h-[10lh ] min-h-18   lg:px-40 lg:w-full min-w-0 max-h-[10lh ]`}
         >
           <div
             className={`z-60 flex overflow-y-visible ring-1 ring-gray-400 
@@ -245,7 +214,7 @@ export default function ChatMessage() {
                   user();
                 }
               }}
-              className={`bg-white  min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-950 lg:min-w-5/6
+              className={`bg-white  min-h-[1/2lh]  max-h-[8lh] rounded-lg text-gray-950 lg:min-w-5/6 bottom-2
             resize-none placeholder:text-sm p-2 font-light focus:outline-none field-sizing-content caret-amber-950
              w-[calc(100%-3rem)]
             `}

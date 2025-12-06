@@ -11,7 +11,7 @@ export default function Home() {
         <Header />
 
         <div className=" flex">
-          <div className="w-0 lg:w-2/5 h-[calc(100vh-4rem)]  mt-13">
+          <div className="w-0 lg:w-2/5 h-[calc(100vh-4rem)]  mt-8">
             <Model />
           </div>
           <div className=" w-full lg:w-3/5">
